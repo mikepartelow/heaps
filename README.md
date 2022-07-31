@@ -2,7 +2,9 @@
 Everybody's favorite data structure
 
 ##
-You shouldn't use this, I'm new to Go. If you disregard my advice, here's the license.
+You shouldn't use this, I'm new to Go. If you choose to disregard my advice, here's the license.
+
+---
 
 Copyright (c) 2022 Mike Partelow
 
