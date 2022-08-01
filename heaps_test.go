@@ -2,6 +2,7 @@ package heaps_test
 
 import (
 	"container/heap"
+	"math/rand"
 	"mp/heaps"
 	"sort"
 	"testing"
@@ -46,7 +47,7 @@ func TestThingsSort(t *testing.T) {
 	}
 	sort.Sort(&got)
 
-	for i, _ := range got {
+	for i := range got {
 		if got[i].Value != want[i].Value {
 			t.Errorf("got %+v, wanted %+v", got[i], want[i])
 		}
@@ -72,20 +73,46 @@ func cmpThingPtrs(a, b *Thing) int {
 }
 
 func TestThingsHeap(t *testing.T) {
-	pq := Things{
-		&Thing{"thing 3", 3},
-		&Thing{"thing 1", 1},
-		&Thing{"thing 2", 2},
-	}
+	t.Run("basics", func(t *testing.T) {
+		pq := Things{
+			&Thing{"thing 3", 3},
+			&Thing{"thing 1", 1},
+			&Thing{"thing 2", 2},
+		}
 
-	heap.Init(&pq)
-	assertAnyThing(t, heap.Pop(&pq), 1)
-	assertAnyThing(t, heap.Pop(&pq), 2)
+		heap.Init(&pq)
+		assertAnyThing(t, heap.Pop(&pq), 1)
+		assertAnyThing(t, heap.Pop(&pq), 2)
 
-	heap.Push(&pq, &Thing{"thing 1", 1})
+		heap.Push(&pq, &Thing{"thing 1", 1})
 
-	assertAnyThing(t, heap.Pop(&pq), 1)
-	assertAnyThing(t, heap.Pop(&pq), 3)
+		assertAnyThing(t, heap.Pop(&pq), 1)
+		assertAnyThing(t, heap.Pop(&pq), 3)
+	})
+
+	t.Run("push/pop", func(t *testing.T) {
+		const n = 1000
+		pq := Things{}
+
+		pushed := make(Things, n)
+
+		for i := 0; i < n; i++ {
+			pushed[i] = &Thing{"x", rand.Intn(100)}
+			heap.Push(&pq, pushed[i])
+
+			s := pushed[0 : i+1]
+			sort.Sort(&s)
+
+			assertAnyThing(t, heap.Pop(&pq), pushed[0].Value)
+			heap.Push(&pq, pushed[0])
+		}
+
+		sort.Sort(&pushed)
+
+		for i := 0; i < n; i++ {
+			assertAnyThing(t, heap.Pop(&pq), pushed[i].Value)
+		}
+	})
 }
 
 func BenchmarkThingsHeap(b *testing.B) {
@@ -129,9 +156,9 @@ func TestGenericHeap(t *testing.T) {
 
 	t.Run("things", func(t *testing.T) {
 		pq := heaps.NewHeap([]Thing{
-			Thing{"thing 3", 3},
-			Thing{"thing 2", 2},
-			Thing{"thing 1", 1},
+			{"thing 3", 3},
+			{"thing 2", 2},
+			{"thing 1", 1},
 		}, cmpThings)
 
 		assertEqual(t, pq.Pop(), Thing{"thing 1", 1})
@@ -141,6 +168,28 @@ func TestGenericHeap(t *testing.T) {
 
 		assertEqual(t, pq.Pop(), Thing{"thing 1", 1})
 		assertEqual(t, pq.Pop(), Thing{"thing 3", 3})
+	})
+
+	t.Run("push/pop", func(t *testing.T) {
+		const n = 1000
+		pq := heaps.NewHeap([]int{}, cmp[int])
+		pushed := make([]int, n)
+
+		for i := 0; i < n; i++ {
+			pushed[i] = rand.Int()
+			pq.Push(pushed[i])
+
+			sort.Ints(pushed[0 : i+1])
+
+			assertEqual(t, pq.Pop(), pushed[0])
+			pq.Push(pushed[0])
+		}
+
+		sort.Ints(pushed)
+
+		for i := 0; i < n; i++ {
+			assertEqual(t, pq.Pop(), pushed[i])
+		}
 	})
 }
 
